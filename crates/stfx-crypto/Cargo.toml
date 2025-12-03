@@ -1,6 +1,15 @@
 [package]
 name = "stfx-crypto"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+license = "Apache-2.0"
+description = "Core cryptographic primitives for the Sovereign Trust Framework (STFx)."
+repository = "https://github.com/sovereigntrustframework/stfx"
+homepage = "https://stfx.dev"
+readme = "README.md"
+keywords = ["crypto", "did", "toip", "ssi", "stfx"]
+categories = ["cryptography", "authentication", "data-structures"]
+documentation = "https://docs.rs/stfx-crypto"
+authors = ["Sovereign Trust Framework <maintainers@stfx.dev>"]
 
 [dependencies]

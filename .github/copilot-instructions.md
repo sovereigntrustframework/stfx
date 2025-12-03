@@ -2,59 +2,108 @@
 
 ## Project Overview
 
-**STFx** is a modular, multi-language foundation for Self-Sovereign Identity (SSI) built on the Trust over IP (ToIP) Stack. The project focuses on abstraction, portability, and interoperability across different technology stacks and programming languages.
+**STFx** is a high-performance, modular Rust implementation of the Trust over IP (ToIP) Stack and Trust Spanning Protocol (TSP), with multi-language bindings. It's the reference implementation for ToIP Layers 1–3 with cryptographic primitives, verifiable identifiers, key management, and credential exchange.
 
-## Key Architecture Principles
+## Architecture at a Glance
 
-- **Multi-Language Support**: Core patterns should be language-agnostic where possible; implementations exist in multiple languages
-- **Modular Design**: Components should be loosely coupled with clear interfaces for cross-language communication
-- **ToIP Stack Alignment**: Follow Trust over IP Layer abstractions (governance, utility, credential, and exchange layers)
-- **Portability**: Code should minimize platform-specific dependencies; use abstraction layers for I/O operations
+### Core Rust Crates (`crates/`)
 
-## Directory Structure (Expected)
+**Foundation Layer** (cryptographic and identity primitives):
+- `stfx-crypto` - Core cryptographic operations
+- `stfx-vid` - Verifiable Identifiers (DIDs/equivalent)
+- `stfx-keys` - Key management and rotation
 
-As the project develops, expect:
-- `docs/` - Architecture and specification documents
-- `{language}/` - Language-specific implementations (e.g., `go/`, `ts/`, `python/`, `rust/`)
-- `.github/workflows/` - CI/CD pipelines for multi-language testing
-- `specs/` - Protocol and interface specifications
+**Protocol Layers** (ToIP Stack implementation):
+- `stfx-layer2` - Utility Layer (infrastructure/governance)
+- `stfx-layer3` - Credential & Exchange Layer (SSI workflows)
+- `stfx-tsp` - Trust Spanning Protocol (cross-domain trust)
+- `stfx-cred-exchange` - Credential issuance/verification workflows
+- `stfx-cesr` - CESR codec support (cryptographic text encoding)
 
-## Development Conventions
+**Support Crates**:
+- `stfx-server` - Reference HTTP server (authentication/API exposure)
+- `stfx-test-utils` - Shared testing utilities
 
-### Code Organization
-- Each language implementation should have clear separation between:
-  - **Core interfaces** - Language-neutral abstractions
-  - **Implementations** - Concrete realizations of those interfaces
-  - **Utils/helpers** - Common utilities
+### Multi-Language Bindings (`bindings/`)
 
-### Naming Patterns
-- Use clear, descriptive names that reflect ToIP concepts (Issuer, Holder, Verifier, Credential, etc.)
-- Prefix internal/private utilities with underscore or language-specific convention
+- `stfx-wasm` - WebAssembly bindings (Node.js, browser)
+- `stfx-python` - Python FFI via PyO3
+- `stfx-kotlin` - JVM/Kotlin bindings via JNIOA
+- `stfx-js` - TypeScript/JavaScript bindings
 
-### Cross-Language Communication
-- Use JSON or Protocol Buffers for data serialization across language boundaries
-- Document wire formats in `specs/` directory
-- Include examples in multiple languages
+All bindings wrap Rust core implementations; keep logic in Rust, not in binding layers.
 
-## Development Workflow
+## Build & Test Workflow
 
-1. **Before Implementation**: Check `docs/` or specs for architecture decisions
-2. **Language-Specific**: Each language may have its own build/test tools (see lang-specific README)
-3. **Testing**: Write tests alongside implementations; multiplatform test integration in CI/CD
-4. **Documentation**: Update relevant docs when changing interfaces or adding features
+Uses **justfile** for task automation (run `just check` before commit):
+
+```powershell
+just test        # cargo test --workspace --all-features
+just clippy      # cargo clippy --workspace --all-features -- -D warnings
+just fmt         # cargo fmt --all
+just check       # runs fmt, clippy, test in sequence
+just publish-all # publishes all crates to crates.io (requires tokens)
+```
+
+Rust version: **1.75+** (stable channel, see `rust-toolchain.toml`).
+
+## Key Development Patterns
+
+### Workspace Dependencies
+All crates use workspace-level package metadata (`Cargo.toml`):
+- Shared version, edition (2021), license (Apache-2.0)
+- Define common dependencies once at workspace level to avoid duplication
+
+### Inter-Crate Dependencies
+Organize dependencies by layer:
+- Foundation crates (`stfx-crypto`, `stfx-vid`, `stfx-keys`) have minimal dependencies
+- Higher layers (`stfx-tsp`, `stfx-cred-exchange`) depend on foundation crates
+- Bindings depend on their respective core crates
+- Example projects in `examples/` demonstrate typical usage patterns
+
+### Cross-Language Data Flow
+When extending bindings:
+1. Define core logic in Rust (e.g., `stfx-tsp/src/lib.rs`)
+2. Expose via binding crate using appropriate FFI (PyO3 for Python, wasm-bindgen for WASM)
+3. Ensure serialization compatibility (JSON or CBOR for wire formats)
+
+### Testing Convention
+Tests live in `#[cfg(test)]` modules alongside implementation:
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_name() { /* ... */ }
+}
+```
+
+Run workspace tests: `just test` (includes all crates and bindings).
+
+## When Adding Features
+
+1. **Identify Layer**: Does it belong in foundation (`crypto`, `vid`, `keys`), protocol (`layer2`, `layer3`, `tsp`), or application (`server`, `cred-exchange`)?
+2. **Add to Appropriate Crate**: Place implementation in `crates/stfx-{feature}` if new, or extend existing crate
+3. **Update Workspace**: Add new crate to members array in root `Cargo.toml`
+4. **Binding Coverage**: Evaluate if bindings need exposure (add to `bindings/stfx-{lang}`)
+5. **Example & Docs**: Add example in `examples/` demonstrating new capability
 
 ## Key Files to Reference
 
-- `README.md` - Project overview and getting started
-- `LICENSE` - Apache 2.0: modifications and commercial use allowed with attribution
+- `README.md` - Quick start, language availability, feature overview
+- `Cargo.toml` - Workspace structure, dependency coordination
+- `rust-toolchain.toml` - Rust version and components (rustfmt, clippy)
+- `justfile` - Build/test automation
+- `LICENSE` - Apache 2.0 (modifications and commercial use allowed)
 
-## When Contributing
+## Architecture Decision: Rust-First
 
-- Respect the multi-language philosophy: discuss breaking changes across language teams
-- Consider how interface changes impact interoperability
-- Add examples in multiple languages for significant features
-- Update specifications before implementing breaking changes
+This is a **Rust-native project** with bindings, not a multi-language project. All core logic lives in Rust crates; bindings are thin wrappers. This ensures:
+- Single source of truth for cryptographic correctness
+- Performance guarantees (zero-cost abstractions in Rust)
+- Easier maintenance and security updates
+- Consistent behavior across language bindings
 
 ---
 
-*Last updated: December 2025*
+*Last updated: December 2025 (refined from actual codebase structure)*
