@@ -1,0 +1,11 @@
+[package]
+name = "stfx"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Sovereign Trust Framework: top-level crate wrapping stfx-crypto for initial release"
+repository = "https://github.com/sovereigntrustframework/stfx"
+readme = "README.md"
+
+[dependencies]
+stfx-crypto = { version = "0.1", path = "../stfx-crypto" }

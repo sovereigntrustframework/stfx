@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "crates/stfx",
     "crates/stfx-*",
     "bindings/stfx-*",
     "examples/*",
@@ -10,7 +11,7 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://github.com/yourusername/stfx"
+repository = "https://github.com/sovereigntrustframework/stfx"
 authors = ["Alexandre Cardoso <alexandre.silva.cardoso@tecnico.ulisboa.pt>"]
 rust-version = "1.75"
 

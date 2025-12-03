@@ -1,6 +1,10 @@
 [package]
 name = "stfx-vid"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+license = "Apache-2.0"
+description = "STFx Verifiable Identifiers (VID): primitives and utilities"
+repository = "https://github.com/sovereigntrustframework/stfx"
+readme = "README.md"
 
 [dependencies]

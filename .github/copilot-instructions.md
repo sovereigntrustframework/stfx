@@ -1,109 +1,62 @@
 # STFx Copilot Instructions
 
-## Project Overview
+This doc equips AI coding agents to work productively in the STFx repo. Keep core logic in Rust crates; bindings are thin wrappers.
 
-**STFx** is a high-performance, modular Rust implementation of the Trust over IP (ToIP) Stack and Trust Spanning Protocol (TSP), with multi-language bindings. It's the reference implementation for ToIP Layers 1–3 with cryptographic primitives, verifiable identifiers, key management, and credential exchange.
+## Architecture
+- Foundation crates (`crates/`):
+    - `stfx-crypto`: cryptographic primitives.
+    - `stfx-vid`: verifiable identifiers.
+    - `stfx-keys`: key management/rotation.
+- Protocol crates:
+    - `stfx-layer2`, `stfx-layer3`: ToIP Layers 2–3 utilities and workflows.
+    - `stfx-tsp`: Trust Spanning Protocol (cross-domain trust).
+    - `stfx-cred-exchange`: issuance/verification workflows.
+    - `stfx-cesr`: CESR codec support.
+- Support:
+    - `stfx-server`: reference HTTP server surface.
+    - `stfx-test-utils`: shared test helpers.
+- Bindings (`bindings/`): `stfx-wasm`, `stfx-python`, `stfx-kotlin`, `stfx-js` expose Rust APIs via FFI; avoid business logic here.
+- Examples: `examples/tsp-hello-rust` shows minimal TSP usage; use as a pattern for examples.
 
-## Architecture at a Glance
+## Build & Test
+- Use `justfile` tasks (Rust 1.75+ per `rust-toolchain.toml`):
+    - `just fmt` → format workspace.
+    - `just clippy` → lint with `-D warnings`.
+    - `just test` → `cargo test --workspace --all-features`.
+    - `just check` → runs fmt, clippy, tests (preferred pre-commit).
+- Workspace metadata and dependencies are coordinated in root `Cargo.toml`; add new crates to `members` and prefer workspace-level deps.
 
-### Core Rust Crates (`crates/`)
+## Conventions & Patterns
+- Rust-first: implement features in the appropriate `crates/stfx-*` crate, then expose via bindings if needed.
+- Tests colocated: use `#[cfg(test)]` modules in each crate (`stfx-test-utils` for shared fixtures).
+- Data formats: prefer JSON/CBOR for FFI/wire compatibility; CESR lives in `stfx-cesr`.
+- Layering: higher-level crates depend on foundation crates; avoid reverse dependencies.
+- Bindings: use PyO3 (Python), wasm-bindgen (WASM), JNI/FFI (Kotlin), and minimal TypeScript shims. Keep serialization stable across languages.
 
-**Foundation Layer** (cryptographic and identity primitives):
-- `stfx-crypto` - Core cryptographic operations
-- `stfx-vid` - Verifiable Identifiers (DIDs/equivalent)
-- `stfx-keys` - Key management and rotation
+## Typical Workflows
+- Add a feature:
+    1) Implement in Rust crate (e.g., `stfx-tsp/src/lib.rs`).
+    2) Add tests in the same crate.
+    3) If cross-language needed, expose via binding crate (`bindings/stfx-*/src/lib.rs`).
+    4) Add a runnable example under `examples/`.
+    5) Run `just check` to validate.
+- Example usage: see `examples/tsp-hello-rust/src/main.rs` for API patterns to mirror.
 
-**Protocol Layers** (ToIP Stack implementation):
-- `stfx-layer2` - Utility Layer (infrastructure/governance)
-- `stfx-layer3` - Credential & Exchange Layer (SSI workflows)
-- `stfx-tsp` - Trust Spanning Protocol (cross-domain trust)
-- `stfx-cred-exchange` - Credential issuance/verification workflows
-- `stfx-cesr` - CESR codec support (cryptographic text encoding)
+## Integration Points
+- Server: `crates/stfx-server` exposes HTTP endpoints mapping to core APIs (keep auth and exposure logic here, not in core crates).
+- CESR/codec: `crates/stfx-cesr` handles text encoding for cryptographic material.
+- Credential exchange: `crates/stfx-cred-exchange` orchestrates issuance/verification using keys/VID.
 
-**Support Crates**:
-- `stfx-server` - Reference HTTP server (authentication/API exposure)
-- `stfx-test-utils` - Shared testing utilities
+## File References
+- Root `Cargo.toml`: workspace members and shared deps.
+- `justfile`: canonical dev commands.
+- `README.md`: high-level overview and language availability.
+- `rust-toolchain.toml`: toolchain and components.
 
-### Multi-Language Bindings (`bindings/`)
+## Notes for Agents
+- Keep changes minimal and aligned with crate ownership boundaries.
+- Do not place core logic in bindings; only expose Rust functions.
+- When adding crates or bindings, update workspace members and run `just check`.
+- Prefer adding examples over expanding binding-side tests.
 
-- `stfx-wasm` - WebAssembly bindings (Node.js, browser)
-- `stfx-python` - Python FFI via PyO3
-- `stfx-kotlin` - JVM/Kotlin bindings via JNIOA
-- `stfx-js` - TypeScript/JavaScript bindings
-
-All bindings wrap Rust core implementations; keep logic in Rust, not in binding layers.
-
-## Build & Test Workflow
-
-Uses **justfile** for task automation (run `just check` before commit):
-
-```powershell
-just test        # cargo test --workspace --all-features
-just clippy      # cargo clippy --workspace --all-features -- -D warnings
-just fmt         # cargo fmt --all
-just check       # runs fmt, clippy, test in sequence
-just publish-all # publishes all crates to crates.io (requires tokens)
-```
-
-Rust version: **1.75+** (stable channel, see `rust-toolchain.toml`).
-
-## Key Development Patterns
-
-### Workspace Dependencies
-All crates use workspace-level package metadata (`Cargo.toml`):
-- Shared version, edition (2021), license (Apache-2.0)
-- Define common dependencies once at workspace level to avoid duplication
-
-### Inter-Crate Dependencies
-Organize dependencies by layer:
-- Foundation crates (`stfx-crypto`, `stfx-vid`, `stfx-keys`) have minimal dependencies
-- Higher layers (`stfx-tsp`, `stfx-cred-exchange`) depend on foundation crates
-- Bindings depend on their respective core crates
-- Example projects in `examples/` demonstrate typical usage patterns
-
-### Cross-Language Data Flow
-When extending bindings:
-1. Define core logic in Rust (e.g., `stfx-tsp/src/lib.rs`)
-2. Expose via binding crate using appropriate FFI (PyO3 for Python, wasm-bindgen for WASM)
-3. Ensure serialization compatibility (JSON or CBOR for wire formats)
-
-### Testing Convention
-Tests live in `#[cfg(test)]` modules alongside implementation:
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn test_name() { /* ... */ }
-}
-```
-
-Run workspace tests: `just test` (includes all crates and bindings).
-
-## When Adding Features
-
-1. **Identify Layer**: Does it belong in foundation (`crypto`, `vid`, `keys`), protocol (`layer2`, `layer3`, `tsp`), or application (`server`, `cred-exchange`)?
-2. **Add to Appropriate Crate**: Place implementation in `crates/stfx-{feature}` if new, or extend existing crate
-3. **Update Workspace**: Add new crate to members array in root `Cargo.toml`
-4. **Binding Coverage**: Evaluate if bindings need exposure (add to `bindings/stfx-{lang}`)
-5. **Example & Docs**: Add example in `examples/` demonstrating new capability
-
-## Key Files to Reference
-
-- `README.md` - Quick start, language availability, feature overview
-- `Cargo.toml` - Workspace structure, dependency coordination
-- `rust-toolchain.toml` - Rust version and components (rustfmt, clippy)
-- `justfile` - Build/test automation
-- `LICENSE` - Apache 2.0 (modifications and commercial use allowed)
-
-## Architecture Decision: Rust-First
-
-This is a **Rust-native project** with bindings, not a multi-language project. All core logic lives in Rust crates; bindings are thin wrappers. This ensures:
-- Single source of truth for cryptographic correctness
-- Performance guarantees (zero-cost abstractions in Rust)
-- Easier maintenance and security updates
-- Consistent behavior across language bindings
-
----
-
-*Last updated: December 2025 (refined from actual codebase structure)*
+Last updated: December 2025
