@@ -1,8 +1,8 @@
 use thiserror::Error;
 
-/// Comprehensive error type for VID Layer-1 operations.
+/// Comprehensive error type for VID operations.
 #[derive(Debug, Clone, Error)]
-pub enum L1Error {
+pub enum Error {
     /// Address resolution failed.
     #[error("Address resolution failed: {0}")]
     AddressResolutionFailed(String),
@@ -34,7 +34,7 @@ pub enum L1Error {
 
 /// Specialized error type for VID verification failures.
 #[derive(Debug, Clone, Error)]
-pub enum L1VidVerifyError {
+pub enum VerifyError {
     /// VID signature verification failed.
     #[error("VID signature verification failed: {0}")]
     SignatureVerificationFailed(String),
