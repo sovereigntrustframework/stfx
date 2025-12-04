@@ -2,6 +2,7 @@
 members = [
     "crates/stfx",
     "crates/stfx-*",
+    "crates/crypto",
     "bindings/stfx-*",
     "examples/*",
 ]

@@ -5,4 +5,4 @@ edition = "2021"
 publish = false
 
 [dependencies]
-stfx-crypto = { path = "../../crates/stfx-crypto" }
+stfx-crypto = { path = "../../crates/crypto" }
