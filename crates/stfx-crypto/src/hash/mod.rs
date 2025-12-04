@@ -1,17 +1,17 @@
 //! Hash function implementations (SHA-256, BLAKE2b-256).
 
 use crate::traits::Hasher;
-use blake2::{Blake2b, digest::consts::U32};
+use blake2::{digest::consts::U32, Blake2b};
 use sha2::{Digest, Sha256};
 
 /// SHA-256 hasher.
 pub struct Sha256Hasher;
 
 impl Hasher for Sha256Hasher {
-    fn hash(&self, data: &[u8]) -> [u8; 32] {
+    fn hash(&self, data: &[u8]) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(data);
-        hasher.finalize().into()
+        hasher.finalize().to_vec()
     }
 }
 
@@ -19,21 +19,27 @@ impl Hasher for Sha256Hasher {
 pub struct Blake2b256Hasher;
 
 impl Hasher for Blake2b256Hasher {
-    fn hash(&self, data: &[u8]) -> [u8; 32] {
+    fn hash(&self, data: &[u8]) -> Vec<u8> {
         let mut hasher = Blake2b::<U32>::new();
         hasher.update(data);
-        hasher.finalize().into()
+        hasher.finalize().to_vec()
     }
 }
 
 /// Convenience function for SHA-256 hashing.
 pub fn sha256(data: &[u8]) -> [u8; 32] {
-    Sha256Hasher.hash(data)
+    let vec = Sha256Hasher.hash(data);
+    let mut arr = [0u8; 32];
+    arr.copy_from_slice(&vec);
+    arr
 }
 
 /// Convenience function for BLAKE2b-256 hashing.
 pub fn blake2b256(data: &[u8]) -> [u8; 32] {
-    Blake2b256Hasher.hash(data)
+    let vec = Blake2b256Hasher.hash(data);
+    let mut arr = [0u8; 32];
+    arr.copy_from_slice(&vec);
+    arr
 }
 
 #[cfg(test)]

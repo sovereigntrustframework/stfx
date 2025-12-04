@@ -1,7 +1,7 @@
 //! Ed25519 digital signature implementation.
 
 use crate::traits::{Signer, Verifier};
-use ed25519_dalek::{SecretKey, Signature, SignatureError, Signer as _, SigningKey, VerifyingKey};
+use ed25519_dalek::{SecretKey, Signature, Signer as _, SigningKey, VerifyingKey};
 use rand::rngs::OsRng;
 use rand::RngCore;
 
@@ -19,7 +19,10 @@ impl Ed25519Keypair {
         let secret = SecretKey::from(sk_bytes);
         let signing_key = SigningKey::from_bytes(&secret);
         let public_key = signing_key.verifying_key();
-        Self { signing_key, public_key }
+        Self {
+            signing_key,
+            public_key,
+        }
     }
 
     /// Get the public verifying key.
@@ -29,20 +32,18 @@ impl Ed25519Keypair {
 }
 
 impl Signer for Ed25519Keypair {
-    type Signature = Signature;
-    type Error = SignatureError;
-
-    fn sign(&self, msg: &[u8]) -> Result<Self::Signature, Self::Error> {
-        Ok(self.signing_key.sign(msg))
+    fn sign(&self, msg: &[u8]) -> Result<Vec<u8>, crate::error::CryptoError> {
+        let sig: Signature = self.signing_key.sign(msg);
+        Ok(sig.to_bytes().to_vec())
     }
 }
 
 impl Verifier for VerifyingKey {
-    type Signature = Signature;
-    type Error = SignatureError;
-
-    fn verify(&self, msg: &[u8], signature: &Self::Signature) -> Result<(), Self::Error> {
-        ed25519_dalek::Verifier::verify(self, msg, signature)
+    fn verify(&self, msg: &[u8], signature: &[u8]) -> Result<(), crate::error::CryptoError> {
+        let sig = Signature::from_slice(signature)
+            .map_err(|e| crate::error::CryptoError::Signature(e.to_string()))?;
+        ed25519_dalek::Verifier::verify(self, msg, &sig)
+            .map_err(|e| crate::error::CryptoError::Signature(e.to_string()))
     }
 }
 
