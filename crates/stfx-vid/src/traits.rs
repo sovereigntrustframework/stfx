@@ -1,27 +1,18 @@
 use crate::error::{Error, VerifyError};
 use std::fmt;
 
-/// VID trait: Abstraction for cryptographically-bound identifiers.
+/// Core VID trait: Abstraction for cryptographically-bound identifiers.
 ///
-/// This trait provides TSP (Trust Spanning Protocol) Layer-1 primitives,
-/// supporting both controller-side operations (with secret key access)
-/// and evaluator-side operations (public key only).
+/// This is the base trait that all VID implementations must support.
+/// It provides core identity resolution and representation operations.
+///
+/// Additional capabilities (key access, verification) are provided by
+/// separate traits (`ControllerView`, `EvaluatorView`, `Verifiable`)
+/// that implementations can selectively implement.
 ///
 /// # Associated Types
 ///
 /// - `Address`: Transport address type (e.g., `Url`, `SocketAddr`, `String`).
-///
-/// # Methods
-///
-/// - **View Access**: `sk_e()`, `sk_s()`, `pk_e()`, `pk_s()`
-///   - `sk_*`: Controller/endpoint view (requires secret key access)
-///   - `pk_*`: Evaluator/remote view (public key only)
-///   - `_e`: Encryption key
-///   - `_s`: Signing key
-///
-/// - **Verification**: `verify()` validates VID state, policy, and records.
-///
-/// - **Resolution**: `resolve_address()` translates VID to transport address.
 pub trait Vid: fmt::Display {
     /// Transport address type (e.g., `String`, `Url`, `SocketAddr`).
     type Address: Clone + fmt::Debug;
@@ -34,29 +25,65 @@ pub trait Vid: fmt::Display {
     /// Maps VID to addressable endpoint (e.g., HTTP endpoint, network socket).
     /// Corresponds to `VID.RESOLVEADDRESS` in TSP Layer-1 spec.
     fn resolve_address(&self) -> Result<Self::Address, Error>;
+}
 
-    /// Retrieve encryption secret key (controller view, VID.SK_e).
+/// Controller-side view: Access to secret keys for local VID control.
+///
+/// Only VIDs controlled by the local endpoint should implement this trait.
+/// Remote/evaluator-only VIDs will not have secret key material available.
+///
+/// # Usage
+///
+/// Implement this trait when the VID is controlled locally and secret keys
+/// (for encryption and signing) are available to the endpoint.
+pub trait ControllerView {
+    /// Retrieve encryption secret key (VID.SK_e).
     ///
     /// Only available when VID is controlled locally.
-    /// Remote evaluators cannot call this method.
     fn sk_e(&self) -> Result<PrivateKey, Error>;
 
-    /// Retrieve signing secret key (controller view, VID.SK_s).
+    /// Retrieve signing secret key (VID.SK_s).
     ///
     /// Only available when VID is controlled locally.
-    /// Remote evaluators cannot call this method.
     fn sk_s(&self) -> Result<PrivateKey, Error>;
+}
 
-    /// Retrieve encryption public key (evaluator view, VID.PK_e).
+/// Evaluator-side view: Access to public keys for VID verification.
+///
+/// All VIDs must support public key retrieval for verification purposes.
+/// This trait should be implemented by all VID types.
+///
+/// # Usage
+///
+/// Implement this trait to provide public key material for:
+/// - Signature verification
+/// - Encryption (if using public-key encryption)
+/// - Trust chain validation
+pub trait EvaluatorView {
+    /// Retrieve encryption public key (VID.PK_e).
     ///
     /// Available to any verifier; no local control required.
     fn pk_e(&self) -> Result<PublicKey, Error>;
 
-    /// Retrieve signing public key (evaluator view, VID.PK_s).
+    /// Retrieve signing public key (VID.PK_s).
     ///
     /// Available to any verifier; no local control required.
     fn pk_s(&self) -> Result<PublicKey, Error>;
+}
 
+/// Verifiable trait: Integrity and policy validation for VIDs.
+///
+/// Provides comprehensive VID verification including cryptographic validation,
+/// policy compliance checking, and trust chain verification.
+///
+/// # Usage
+///
+/// Implement this trait when the VID supports full verification including:
+/// - Signature verification
+/// - Policy compliance checking
+/// - Status validation (not revoked, not expired, etc.)
+/// - Trust chain verification
+pub trait Verifiable {
     /// Verify VID integrity, state, policy, and records.
     ///
     /// Corresponds to `VID.VERIFY` in TSP Layer-1 spec.
