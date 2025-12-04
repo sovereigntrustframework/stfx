@@ -13,7 +13,7 @@ fn main() {
     let msg = b"hello TSP".to_vec();
     let sig = sign_kp.sign(&msg).unwrap();
 
-    let pub_raw = sign_kp.public.to_bytes();
+    let pub_raw = sign_kp.public_key().to_bytes();
     let sig_raw = sig.to_bytes();
 
     println!(
@@ -26,7 +26,7 @@ fn main() {
     println!("\n=== X25519 Key Agreement (Trait-based) ===");
     let alice = X25519Keypair::generate();
     let bob = X25519Keypair::generate();
-    let shared_secret = alice.diffie_hellman(&bob.public);
+    let shared_secret = alice.diffie_hellman(bob.public_key());
     println!("{{\n  \"shared_secret_b64u\": \"{}\"\n}}", base64url_encode(&shared_secret));
 
     println!("\n=== ChaCha20Poly1305 AEAD ===");
