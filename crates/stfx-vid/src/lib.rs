@@ -36,6 +36,7 @@ pub mod traits;
 
 // Public API re-exports
 pub use error::{Error, VerifyError};
+pub use implementations::PeerVid;
 pub use traits::{ControllerView, EvaluatorView, PrivateKey, PublicKey, Verifiable, Vid};
 
 #[cfg(test)]

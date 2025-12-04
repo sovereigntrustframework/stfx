@@ -1,9 +1,20 @@
-//! Implementations of VID Layer-1 traits.
+//! Implementations of VID traits.
 //!
-//! This module will contain concrete implementations such as:
+//! This module contains concrete VID implementations following the trait patterns
+//! defined in the traits module.
+//!
+//! # Available Implementations
+//!
+//! - [`PeerVid`]: A peer endpoint in the TSP network with public/optional secret keys.
+//!   Supports both evaluator-side and controller-side operations.
+//!
+//! # Future Implementations
+//!
+//! Planned implementations:
 //! - `UrlVid`: URL-based VID for HTTP endpoints
 //! - `SocketVid`: Socket address-based VID for network endpoints
-//! - `StringVid`: Generic string-based VID for custom transports
-//!
-//! Future implementations should follow the `L1Vid` trait interface
-//! defined in the traits module.
+//! - `DIDVid`: DID (Decentralized Identifier) based VID
+
+pub mod peer;
+
+pub use peer::PeerVid;
