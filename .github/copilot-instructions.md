@@ -33,6 +33,7 @@ This doc equips AI coding agents to work productively in the STFx repo. Keep cor
 - Layering: higher-level crates depend on foundation crates; avoid reverse dependencies.
 - Bindings: use PyO3 (Python), wasm-bindgen (WASM), JNI/FFI (Kotlin), and minimal TypeScript shims. Keep serialization stable across languages.
 - Error handling: each crate defines its own error types (e.g., `CryptoError`, `VIDError`, `TSPError`) with domain-specific variants. This maintains maximum modularity and zero coupling between Layer 1 crates. Avoid shared error crates unless significant duplication emerges.
+- Documentation: all comments, docs, and documentation must be written in English. This includes inline comments, doc comments (`///`, `//!`), README files, and code examples.
 
 ## Typical Workflows
 - Add a feature:

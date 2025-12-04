@@ -63,6 +63,10 @@ pub enum CryptoError {
     /// Randomness source failure
     #[error("Failed to acquire secure randomness")]
     RandomnessFailure,
+
+    /// Randomness feature disabled at compile time
+    #[error("Randomness/key generation disabled (compile-time feature flag)")]
+    RandomnessDisabled,
 }
 
 // =============================================================================

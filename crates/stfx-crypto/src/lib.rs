@@ -6,40 +6,28 @@
 mod encoding;
 mod error;
 mod traits;
+
 pub mod aead;
 pub mod hash;
-pub mod keys {
-    pub mod ed25519_impl;
-    pub mod x25519_impl;
-}
+pub mod keys;
 pub mod rand;
 
 // Re-export core traits
-pub use traits::{Aead, Hasher, KeyAgreement, Signer, Verifier};
+pub use traits::{Aead, Hasher, KeyAgreement, KeyPair, Signer, Verifier};
 
 // Public error types
-pub use error::CryptoError;
-pub use error::AeadError;
+pub use error::{AeadError, CryptoError};
 
-// Re-export implementations as modules
-pub mod ed25519 {
-    pub use crate::keys::ed25519_impl::*;
-}
+// Re-export key implementations
+pub use keys::{Ed25519Keypair, X25519Keypair};
 
-// `hash` module declared above; use directly as `crate::hash::*`
+// Re-export hash implementations
+pub use hash::{Blake2b256Hasher, Sha256Hasher};
 
-pub mod x25519 {
-    pub use crate::keys::x25519_impl::*;
-}
+// Re-export encoding utilities
+pub use encoding::{base64url_decode, base64url_encode};
 
-pub mod encode {
-    pub use crate::encoding::*;
-}
-
-// Convenience aliases following the example style
-pub use crate::hash::{Blake2b256Hasher, Sha256Hasher};
-pub use crate::keys::ed25519_impl::Ed25519Keypair;
-
+// Convenience aliases
 /// Convenience alias — default key type (Ed25519)
 pub type DefaultKeypair = Ed25519Keypair;
 /// Convenience alias — default hasher (Blake2b-256)
@@ -51,7 +39,7 @@ mod integration_tests {
 
     #[test]
     fn ed25519_sign_verify_integration() {
-        let kp = ed25519::Ed25519Keypair::generate();
+        let kp = Ed25519Keypair::generate().unwrap();
         let msg = b"hello TSP";
         let sig = Signer::sign(&kp, msg).unwrap();
         Verifier::verify(kp.public_key(), msg, &sig).unwrap();
@@ -59,7 +47,7 @@ mod integration_tests {
 
     #[test]
     fn trait_based_signing() {
-        let kp = ed25519::Ed25519Keypair::generate();
+        let kp = Ed25519Keypair::generate().unwrap();
         let msg = b"test message";
 
         // Use through trait
@@ -69,8 +57,8 @@ mod integration_tests {
 
     #[test]
     fn trait_based_hashing() {
-        let sha = hash::Sha256Hasher;
-        let blake = hash::Blake2b256Hasher;
+        let sha = Sha256Hasher;
+        let blake = Blake2b256Hasher;
 
         let data = b"test data";
         assert_eq!(Hasher::hash(&sha, data).len(), 32);
@@ -79,8 +67,8 @@ mod integration_tests {
 
     #[test]
     fn trait_based_key_agreement() {
-        let alice = x25519::X25519Keypair::generate();
-        let bob = x25519::X25519Keypair::generate();
+        let alice = X25519Keypair::generate();
+        let bob = X25519Keypair::generate();
 
         let shared_a = KeyAgreement::diffie_hellman(&alice, bob.public_key());
         let shared_b = KeyAgreement::diffie_hellman(&bob, alice.public_key());
