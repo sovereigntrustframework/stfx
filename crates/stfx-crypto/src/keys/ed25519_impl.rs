@@ -41,9 +41,9 @@ impl Signer for Ed25519Keypair {
 impl Verifier for VerifyingKey {
     fn verify(&self, msg: &[u8], signature: &[u8]) -> Result<(), crate::error::CryptoError> {
         let sig = Signature::from_slice(signature)
-            .map_err(|e| crate::error::CryptoError::Signature(e.to_string()))?;
+            .map_err(|e| crate::error::CryptoError::InvalidInput(e.to_string()))?;
         ed25519_dalek::Verifier::verify(self, msg, &sig)
-            .map_err(|e| crate::error::CryptoError::Signature(e.to_string()))
+            .map_err(|_| crate::error::CryptoError::VerificationFailed)
     }
 }
 
