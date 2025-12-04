@@ -2,7 +2,6 @@
 //! Layer 1 — ToIP cryptographic foundations
 //! Designed for maximum modularity, zero coupling, and long-term extensibility.
 
-pub mod key_manager;
 pub mod key_pair;
 pub mod signer;
 pub mod verifier;
@@ -13,7 +12,6 @@ pub mod multibase;
 pub mod multicodec;
 pub mod compat;
 
-pub use key_manager::KeyManager;
 pub use key_pair::KeyPair;
 pub use signer::Signer;
 pub use verifier::Verifier;

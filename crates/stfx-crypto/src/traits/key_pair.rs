@@ -12,7 +12,7 @@
 //! • Ready for `no-std`, WASM, embedded and post-quantum future
 
 use crate::CryptoError;
-use super::{KeyManager, Signer, Verifier};
+use super::{Signer, Verifier};
 
 /// A complete cryptographic keypair (public + secret).
 ///
@@ -24,7 +24,24 @@ use super::{KeyManager, Signer, Verifier};
 /// Implementations MUST ensure secret key material is zeroized on drop.
 /// Use `zeroize::Zeroizing` or the `Zeroize` derive on the struct.
 #[allow(dead_code)]
-pub trait KeyPair: KeyManager + Signer + Verifier + Sized {
+pub trait KeyPair: Signer + Verifier + Sized {
+    // ======================================================================
+    // Key generation and access
+    // ======================================================================
+
+    /// Generates a new random keypair.
+    ///
+    /// # Errors
+    /// Returns `CryptoError::KeyGeneration` if the random number generator
+    /// fails or if key generation is not supported in the current environment.
+    fn generate() -> Result<Self, CryptoError>;
+
+    /// Returns the raw public key bytes (algorithm-specific format).
+    ///
+    /// This method is safe to expose and is used for verification,
+    /// key exchange, and DID creation.
+    fn public_key_bytes(&self) -> &[u8];
+
     // ======================================================================
     // Secret key access (safe — only for internal use or advanced KMS)
     // ======================================================================
