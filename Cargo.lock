@@ -814,6 +814,11 @@ version = "0.1.0"
 [[package]]
 name = "stfx-vid"
 version = "0.1.0"
+dependencies = [
+ "stfx-crypto",
+ "stfx-keys",
+ "thiserror",
+]
 
 [[package]]
 name = "stfx-wasm"

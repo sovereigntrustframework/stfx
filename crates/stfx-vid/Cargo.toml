@@ -8,3 +8,7 @@ repository = "https://github.com/sovereigntrustframework/stfx"
 readme = "README.md"
 
 [dependencies]
+stfx-crypto = { path = "../stfx-crypto", version = "0.1.0" }
+stfx-keys = { path = "../stfx-keys", version = "0.1.0" }
+thiserror = "1.0"
+
